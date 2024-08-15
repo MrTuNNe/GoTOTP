@@ -28,7 +28,7 @@ go get github.com/MrTuNNe/GoTOTP
 
   
 // To generate a random secret you can use this
-secret, err := totp.GenerateRandomSecret(32) // the length of the secret key
+secret, err := GoTOTP.GenerateRandomSecret(32) // the length of the secret key
 if err != nil {
 	// handle the error
 }
