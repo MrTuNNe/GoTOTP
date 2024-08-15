@@ -25,7 +25,7 @@ Maybe in the future I'm going to make it in a way to control this yourself, howe
 First install the package
 ```go
 
-go  get  github.com/MrTuNNe/GoTOTP`
+go get github.com/MrTuNNe/GoTOTP
 
   
 // To generate a random secret you can use this
