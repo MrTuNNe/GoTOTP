@@ -10,9 +10,8 @@ This implementation is based on **RFC 6238**
 ## Project Goals & Roadmap
 
  1. Keep it simple
- 2. Create a way of generating random secret keys (will be made soon)
- 3. Implementing a method of generating the QR code for Google Authenticator and other similar apps like this.
- 4.  Keep it rock solid for years to come :)
+ 2. Implementing a method of generating the QR code for Google Authenticator and other similar apps like this.
+ 3.  Keep it rock solid for years to come :)
 
 ## Other things to keep in mind
 - The default behavior is to generate a code that will expire in 30 seconds
@@ -29,13 +28,13 @@ go get github.com/MrTuNNe/GoTOTP
 
   
 // To generate a random secret you can use this
-secret, err := totp.GenerateRandomSecret(32) // the length of the secret key
+secret, err := GoTOTP.GenerateRandomSecret(32) // the length of the secret key
 if err != nil {
 	// handle the error
 }
 // The secret key must be base32 encoded and without padding
 
-totp := totp.TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
+totp := GoTOTP.TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
 
 // generate the TOTP with the timestamp
 
