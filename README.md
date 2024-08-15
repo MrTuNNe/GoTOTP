@@ -23,15 +23,33 @@ Maybe in the future I'm going to make it in a way to control this yourself, howe
 
 ## Code Examples
 First install the package
-` go get github.com/MrTuNNe/GoTOTP`
+```go
 
-    // The secret key must be base32 encoded and without padding
-    totp  :=  totp.TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
-    // generate the TOTP with the timestamp
-    totp.GenerateTOTP(time.Now().Unix())
-    if totp.Verify("149425") { // check the input code from the user
-	    // do something if the code is good 
-    }
-    // you can also check a code with a timestamp
-    totp.VerifyWithTimestamp(1723719527, "611626") // this will return true
-    totp.VerifyWithTimestamp(1723719580, "611626") // this will return false
+go  get  github.com/MrTuNNe/GoTOTP`
+
+  
+// To generate a random secret you can use this
+secret, err := totp.GenerateRandomSecret(32) // the length of the secret key
+if err != nil {
+	// handle the error
+}
+// The secret key must be base32 encoded and without padding
+
+totp := totp.TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
+
+// generate the TOTP with the timestamp
+
+totp.GenerateTOTP(time.Now().Unix())
+
+if totp.Verify("149425") { // check the input code from the user
+
+// do something if the code is good
+
+}
+
+// you can also check a code with a timestamp
+
+totp.VerifyWithTimestamp(1723719527, "611626") // this will return true
+
+totp.VerifyWithTimestamp(1723719580, "611626") // this will return false
+```
