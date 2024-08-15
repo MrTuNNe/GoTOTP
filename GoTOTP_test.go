@@ -1,4 +1,4 @@
-package totp
+package GoTOTP
 
 import "testing"
 
