@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"encoding/binary"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -15,11 +16,14 @@ type TOTP struct {
 	Key string
 }
 
-func (totp *TOTP) hmac_sha256(message []byte) (hash []byte) {
-	key, _ := totp.validateSecret()
+func (totp *TOTP) hmac_sha256(message []byte) ([]byte, error) {
+	key, err := totp.validateSecret()
+	if err != nil {
+		return []byte{}, err
+	}
 	mac := hmac.New(sha256.New, key)
 	mac.Write(message)
-	return mac.Sum(nil)
+	return mac.Sum(nil), nil
 }
 
 func (totp *TOTP) validateSecret() ([]byte, error) {
@@ -38,7 +42,10 @@ func (totp *TOTP) GenerateTOTP(timestamp int64) string {
 	// we convert the timestamp from int64 to a byte array
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(currentTime))
-	hash := totp.hmac_sha256(buf)
+	hash, err := totp.hmac_sha256(buf)
+	if err != nil {
+		log.Fatal(err)
+	}
 	offset := int(hash[len(hash)-1] & 0xf)
 	code := (int(hash[offset]&0x7f) << 24) |
 		(int(hash[offset+1]&0xff) << 16) |
