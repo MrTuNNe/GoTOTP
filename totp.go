@@ -35,7 +35,7 @@ func (totp *TOTP) validateSecret() ([]byte, error) {
 }
 
 // Based from RFC 6238
-func (totp *TOTP) GenerateTOTP(timestamp int64) string {
+func (totp *TOTP) GenerateTOTP(timestamp int64) (string, error) {
 	codeDigits := 6
 	var result string
 	currentTime := timestamp / int64(30)
@@ -44,7 +44,7 @@ func (totp *TOTP) GenerateTOTP(timestamp int64) string {
 	binary.BigEndian.PutUint64(buf, uint64(currentTime))
 	hash, err := totp.hmac_sha256(buf)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	offset := int(hash[len(hash)-1] & 0xf)
 	code := (int(hash[offset]&0x7f) << 24) |
@@ -56,18 +56,24 @@ func (totp *TOTP) GenerateTOTP(timestamp int64) string {
 	for len(result) < codeDigits {
 		result = "0" + result
 	}
-	return result
+	return result, nil
 }
 
 // Verify if the given input code is valid for the current timestamp.
 func (totp *TOTP) Verify(inputCode string) bool {
 	timestamp := time.Now().Unix()
-	code := totp.GenerateTOTP(timestamp)
+	code, err := totp.GenerateTOTP(timestamp)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return code == inputCode
 }
 
 // Verify if the input code is valid for a given timestamp. Use this just for testing
 func (totp *TOTP) VerifyWithTimestamp(timestamp int64, inputCode string) bool {
-	code := totp.GenerateTOTP(timestamp)
+	code, err := totp.GenerateTOTP(timestamp)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return code == inputCode
 }
