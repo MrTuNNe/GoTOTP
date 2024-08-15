@@ -1,3 +1,5 @@
+[![Go](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml/badge.svg)](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml)
+
 # A simple Time Based One-Time Password library
 - This library is created with the focus on simplicity and stable code.
 - This library will not change much once it will reach maturity.
