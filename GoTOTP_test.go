@@ -1,6 +1,8 @@
 package GoTOTP
 
-import "testing"
+import (
+	"testing"
+)
 
 var totp = TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
 
@@ -27,5 +29,17 @@ func TestTOTP_GenerateTOTP(t *testing.T) {
 	}
 	if code != "611626" {
 		t.Error("The generated code is supposed to be `611626` but it's not")
+	}
+}
+
+func TestTOTP_RandomSecret(t *testing.T) {
+	secret, err := GenerateRandomSecret(32)
+	if err != nil {
+		t.Error(err)
+	}
+	totp_test := TOTP{Key: secret}
+	_, err = totp_test.GenerateTOTP(1723719527)
+	if err != nil {
+		t.Error("Generating the code has failed. The secret key might be problematic")
 	}
 }
