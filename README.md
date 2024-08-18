@@ -51,4 +51,8 @@ if totp.Verify("149425") { // check the input code from the user
 totp.VerifyWithTimestamp(1723719527, "611626") // this will return true
 
 totp.VerifyWithTimestamp(1723719580, "611626") // this will return false
+
+totp.GenerateURI() // This will generate an URI that can be used for generating a QR code with all the details required for the app to understand.
+// Example return:
+// otpauth://totp/mrtunne.info:%20admin@admin.test?algorithm=SHA256&digits=6&issuer=mrtunne.info&period=30&secret=OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ
 ```
