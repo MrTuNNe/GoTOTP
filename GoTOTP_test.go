@@ -4,7 +4,9 @@ import (
 	"testing"
 )
 
-var totp = TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
+var secretKey = "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"
+
+var totp = TOTP{Key: secretKey}
 
 func TestTOTP_Verify(t *testing.T) {
 	// this should fail as is it and old code expired (with the current timestamp)
@@ -41,5 +43,24 @@ func TestTOTP_RandomSecret(t *testing.T) {
 	_, err = totp_test.GenerateTOTP(1723719527)
 	if err != nil {
 		t.Error("Generating the code has failed. The secret key might be problematic")
+	}
+}
+
+func TestTOTP_GenerateURI(t *testing.T) {
+	otp_good := TOTP{
+		Key:      secretKey,
+		Issuer:   "mrtunne.info",
+		UserName: "admin@admin.test",
+	}
+	_, err := otp_good.GenerateURI()
+	if err != nil {
+		t.Error(err)
+	}
+	otp_bad := TOTP{
+		Key: secretKey,
+	}
+	_, err = otp_bad.GenerateURI()
+	if err == nil {
+		t.Error("This implementation was supposed to return errors as it has null values for `Issuer` and `UserName`")
 	}
 }
