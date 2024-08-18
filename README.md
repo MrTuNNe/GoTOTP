@@ -34,7 +34,11 @@ if err != nil {
 }
 // The secret key must be base32 encoded and without padding
 
-totp := GoTOTP.TOTP{Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ"}
+totp := GoTOTP.TOTP{
+	Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ",
+	Issuer: "mrtunne.info"
+	UserName: "admin@admin.test"
+}
 
 // generate the TOTP with the timestamp
 
