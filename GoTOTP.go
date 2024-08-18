@@ -5,15 +5,20 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"log"
 	"math"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type TOTP struct {
-	Key string
+	Key      string
+	Issuer   string
+	UserName string
 }
 
 func (totp *TOTP) hmac_sha256(message []byte) ([]byte, error) {
@@ -76,4 +81,23 @@ func (totp *TOTP) VerifyWithTimestamp(timestamp int64, inputCode string) bool {
 		log.Fatal(err)
 	}
 	return code == inputCode
+}
+
+func (totp *TOTP) GenerateURI() (string, error) {
+	if totp.Issuer == "" || totp.UserName == "" || totp.Key == "" {
+		return "", errors.New("you must specify a value for `Issuer`, `UserName` and `Key` to generate an URI")
+	}
+	uri := url.URL{
+		Scheme: "otpauth",
+		Host:   "totp",
+		Path:   fmt.Sprintf("%s: %s", totp.Issuer, totp.UserName),
+	}
+	q := uri.Query()
+	q.Add("secret", totp.Key)
+	q.Add("issuer", totp.Issuer)
+	q.Add("algorithm", "SHA256")
+	q.Add("digits", "6")
+	q.Add("period", "30")
+	uri.RawQuery = q.Encode()
+	return uri.String(), nil
 }
