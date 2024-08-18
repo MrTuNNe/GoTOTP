@@ -41,6 +41,9 @@ func (totp *TOTP) validateSecret() ([]byte, error) {
 
 // Based from RFC 6238
 func (totp *TOTP) GenerateTOTP(timestamp int64) (string, error) {
+	if totp.Key == "" {
+		return "", errors.New("`Key` value cannot be empty")
+	}
 	codeDigits := 6
 	var result string
 	currentTime := timestamp / int64(30)
