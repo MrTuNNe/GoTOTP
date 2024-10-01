@@ -1,62 +1,109 @@
-[![Go](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml/badge.svg)](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml)
-# A simple Time Based One-Time Password library
-- This library is created with the focus on simplicity and stable code.
-- This library will not change much once it will reach maturity.
-- While other implementations already exists, this project is mostly created because I was bored of building only websites :) 
-- This library will try as much possible not to reinvent the wheel. If there is an implementation in the standard library, that implementation will be used. (I've seen in some other libraries this weird behavior of reinventing the wheel)
 
-This implementation is based on **RFC 6238** 
+# GoTOTP: A Simple Time-Based One-Time Password (TOTP) Library
+
+[![Go](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml/badge.svg)](https://github.com/MrTuNNe/GoTOTP/actions/workflows/go.yml)
+
+## Overview
+
+GoTOTP is a simple, stable, and efficient Time-Based One-Time Password (TOTP) library written in Go, built with a focus on simplicity and stability. It aims to be a long-term solution for generating and verifying TOTPs, without reinventing the wheel.
+
+This implementation is based on **[RFC 6238](https://datatracker.ietf.org/doc/html/rfc6238)**, ensuring compatibility with Google Authenticator and similar apps.
+
+### Why GoTOTP?
+
+- **Simplicity**: Prioritizes straightforward code and minimal changes once the library reaches maturity.
+- **Stability**: Aims for long-term stability.
+- **Standard-compliant**: Utilizes existing Go standard libraries wherever possible.
+- **Personal Project**: Initially built out of curiosity and as a break from web development.
+
+## Features
+
+- Generates a 6-digit code, valid for 30 seconds (default).
+- Built-in methods for secret generation, code verification, and URI generation for QR codes.
+- QR code support for Google Authenticator and other similar apps (future enhancement).
 
 ## Project Goals & Roadmap
 
- 1. Keep it simple
- 2. Implementing a method of generating the QR code for Google Authenticator and other similar apps like this.
- 3.  Keep it rock solid for years to come :)
+1. **Simplicity**: Maintain ease of use and clarity in design.
+2. **QR Code Generation**: Implement a method to generate QR codes for TOTP setup.
+3. **Long-Term Stability**: Keep the library rock-solid for years to come.
 
-## Other things to keep in mind
-- The default behavior is to generate a code that will expire in 30 seconds
-- The generated code will have 6 numbers.
+## Future Enhancements
 
-Maybe in the future I'm going to make it in a way to control this yourself, however this is not a priority.
+- Potentially allow users to configure code length and expiration period.
+  - *Note*: This is not a current priority.
 
+## Installation
 
-## Code Examples
-First install the package
-```go
+To get started, install the package:
 
+```bash
 go get github.com/MrTuNNe/GoTOTP
-
-  
-// To generate a random secret you can use this
-secret, err := GoTOTP.GenerateRandomSecret(32) // the length of the secret key
-if err != nil {
-	// handle the error
-}
-// The secret key must be base32 encoded and without padding
-
-totp := GoTOTP.TOTP{
-	Key: "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ",
-	Issuer: "mrtunne.info"
-	UserName: "admin@admin.test"
-}
-
-// generate the TOTP with the timestamp
-
-totp.GenerateTOTP(time.Now().Unix())
-
-if totp.Verify("149425") { // check the input code from the user
-
-// do something if the code is good
-
-}
-
-// you can also check a code with a timestamp
-
-totp.VerifyWithTimestamp(1723719527, "611626") // this will return true
-
-totp.VerifyWithTimestamp(1723719580, "611626") // this will return false
-
-totp.GenerateURI() // This will generate an URI that can be used for generating a QR code with all the details required for the app to understand.
-// Example return:
-// otpauth://totp/mrtunne.info:%20admin@admin.test?algorithm=SHA256&digits=6&issuer=mrtunne.info&period=30&secret=OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ
 ```
+
+## Usage Example
+
+Here is a basic example of how to generate and verify TOTPs using GoTOTP:
+
+```go
+package main
+
+import (
+    "fmt"
+    "time"
+    "github.com/MrTuNNe/GoTOTP"
+)
+
+func main() {
+    // Generate a random secret (base32 encoded, without padding)
+    secret, err := GoTOTP.GenerateRandomSecret(32) // 32 bytes length
+    if err != nil {
+        // Handle error
+        fmt.Println("Error generating secret:", err)
+        return
+    }
+
+    // Create a new TOTP instance
+    totp := GoTOTP.TOTP{
+        Key:      "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ",
+        Issuer:   "mrtunne.info",
+        UserName: "admin@admin.test",
+    }
+
+    // Generate a TOTP based on the current timestamp
+    code := totp.GenerateTOTP(time.Now().Unix())
+    fmt.Println("Generated TOTP:", code)
+
+    // Verify user input
+    if totp.Verify("149425") {
+        fmt.Println("Code verified successfully!")
+    } else {
+        fmt.Println("Invalid code.")
+    }
+
+    // Check code with a specific timestamp
+    if totp.VerifyWithTimestamp(1723719527, "611626") {
+        fmt.Println("Code valid for timestamp.")
+    } else {
+        fmt.Println("Code invalid for timestamp.")
+    }
+
+    // Generate a URI for QR code generation
+    uri := totp.GenerateURI()
+    fmt.Println("TOTP URI:", uri)
+    // Example output:
+    // otpauth://totp/mrtunne.info:%20admin@admin.test?algorithm=SHA256&digits=6&issuer=mrtunne.info&period=30&secret=OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ
+}
+```
+
+### Notes:
+- **Default Expiration**: Generated codes expire after 30 seconds.
+- **Default Length**: Codes are 6 digits long.
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request if you have any improvements or suggestions.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
