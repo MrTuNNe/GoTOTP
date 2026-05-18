@@ -46,6 +46,62 @@ func TestTOTP_RandomSecret(t *testing.T) {
 	}
 }
 
+func TestTOTP_SHA1(t *testing.T) {
+	totp_sha1 := TOTP{Key: secretKey, Algorithm: SHA1}
+	code, err := totp_sha1.GenerateTOTP(1723719527)
+	if err != nil {
+		t.Error("Generating the code has failed. Was supposed to work.")
+	}
+	if code != "032332" {
+		t.Errorf("Expected `032332` but got `%s`", code)
+	}
+	if !totp_sha1.VerifyWithTimestamp(1723719527, "032332") {
+		t.Error("Expected SHA1 code to be accepted")
+	}
+	if totp_sha1.VerifyWithTimestamp(1723719580, "032332") {
+		t.Error("Expected SHA1 code to be rejected past its window")
+	}
+	if totp_sha1.VerifyWithTimestamp(1723719527, "611626") {
+		t.Error("Expected SHA256 code to be rejected when algorithm is SHA1")
+	}
+}
+
+func TestTOTP_SHA512(t *testing.T) {
+	totp_sha512 := TOTP{Key: secretKey, Algorithm: SHA512}
+	code, err := totp_sha512.GenerateTOTP(1723719527)
+	if err != nil {
+		t.Error("Generating the code has failed. Was supposed to work.")
+	}
+	if code != "319711" {
+		t.Errorf("Expected `319711` but got `%s`", code)
+	}
+	if !totp_sha512.VerifyWithTimestamp(1723719527, "319711") {
+		t.Error("Expected SHA512 code to be accepted")
+	}
+	if totp_sha512.VerifyWithTimestamp(1723719580, "319711") {
+		t.Error("Expected SHA512 code to be rejected past its window")
+	}
+	if totp_sha512.VerifyWithTimestamp(1723719527, "611626") {
+		t.Error("Expected SHA256 code to be rejected when algorithm is SHA512")
+	}
+}
+
+func TestTOTP_AlgorithmIsolation(t *testing.T) {
+	// All three algorithms must produce distinct codes for the same key/timestamp
+	ts := int64(1723719527)
+	codes := map[Algorithm]string{}
+	for _, alg := range []Algorithm{SHA1, SHA256, SHA512} {
+		code, err := (&TOTP{Key: secretKey, Algorithm: alg}).GenerateTOTP(ts)
+		if err != nil {
+			t.Errorf("%s: unexpected error: %v", alg, err)
+		}
+		codes[alg] = code
+	}
+	if codes[SHA1] == codes[SHA256] || codes[SHA256] == codes[SHA512] || codes[SHA1] == codes[SHA512] {
+		t.Errorf("Expected distinct codes per algorithm, got: %v", codes)
+	}
+}
+
 func TestTOTP_GenerateURI(t *testing.T) {
 	otp_good := TOTP{
 		Key:      secretKey,

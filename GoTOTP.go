@@ -2,12 +2,14 @@ package GoTOTP
 
 import (
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base32"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"log"
+	"hash"
 	"math"
 	"net/url"
 	"strconv"
@@ -15,28 +17,46 @@ import (
 	"time"
 )
 
+type Algorithm string
+
+const (
+	SHA1   Algorithm = "SHA1"
+	SHA256 Algorithm = "SHA256"
+	SHA512 Algorithm = "SHA512"
+)
+
 type TOTP struct {
-	Key      string
-	Issuer   string
-	UserName string
+	Key       string
+	Issuer    string
+	UserName  string
+	Algorithm Algorithm
 }
 
-func (totp *TOTP) hmac_sha256(message []byte) ([]byte, error) {
+func (totp *TOTP) hmacHash(message []byte) ([]byte, error) {
 	key, err := totp.validateSecret()
 	if err != nil {
 		return []byte{}, err
 	}
-	mac := hmac.New(sha256.New, key)
+	var h func() hash.Hash
+	switch totp.Algorithm {
+	case SHA1:
+		h = sha1.New
+	case SHA512:
+		h = sha512.New
+	default:
+		h = sha256.New
+	}
+	mac := hmac.New(h, key)
 	mac.Write(message)
 	return mac.Sum(nil), nil
 }
 
 func (totp *TOTP) validateSecret() ([]byte, error) {
-	// we add padding to the base32 secret key if necessary
-	if len(totp.Key)%8 != 0 {
-		totp.Key = totp.Key + strings.Repeat("=", 8-(len(totp.Key)%8))
+	key := totp.Key
+	if len(key)%8 != 0 {
+		key = key + strings.Repeat("=", 8-(len(key)%8))
 	}
-	return base32.StdEncoding.DecodeString(totp.Key)
+	return base32.StdEncoding.DecodeString(key)
 }
 
 // Based from RFC 6238
@@ -47,10 +67,9 @@ func (totp *TOTP) GenerateTOTP(timestamp int64) (string, error) {
 	codeDigits := 6
 	var result string
 	currentTime := timestamp / int64(30)
-	// we convert the timestamp from int64 to a byte array
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(currentTime))
-	hash, err := totp.hmac_sha256(buf)
+	hash, err := totp.hmacHash(buf)
 	if err != nil {
 		return "", err
 	}
@@ -72,16 +91,16 @@ func (totp *TOTP) Verify(inputCode string) bool {
 	timestamp := time.Now().Unix()
 	code, err := totp.GenerateTOTP(timestamp)
 	if err != nil {
-		log.Fatal(err)
+		return false
 	}
 	return code == inputCode
 }
 
-// Verify if the input code is valid for a given timestamp. Use this just for testing
+// Verify if the input code is valid for a given timestamp.
 func (totp *TOTP) VerifyWithTimestamp(timestamp int64, inputCode string) bool {
 	code, err := totp.GenerateTOTP(timestamp)
 	if err != nil {
-		log.Fatal(err)
+		return false
 	}
 	return code == inputCode
 }
@@ -89,6 +108,10 @@ func (totp *TOTP) VerifyWithTimestamp(timestamp int64, inputCode string) bool {
 func (totp *TOTP) GenerateURI() (string, error) {
 	if totp.Issuer == "" || totp.UserName == "" || totp.Key == "" {
 		return "", errors.New("you must specify a value for `Issuer`, `UserName` and `Key` to generate an URI")
+	}
+	algorithm := totp.Algorithm
+	if algorithm == "" {
+		algorithm = SHA256
 	}
 	uri := url.URL{
 		Scheme: "otpauth",
@@ -98,7 +121,7 @@ func (totp *TOTP) GenerateURI() (string, error) {
 	q := uri.Query()
 	q.Add("secret", totp.Key)
 	q.Add("issuer", totp.Issuer)
-	q.Add("algorithm", "SHA256")
+	q.Add("algorithm", string(algorithm))
 	q.Add("digits", "6")
 	q.Add("period", "30")
 	uri.RawQuery = q.Encode()
