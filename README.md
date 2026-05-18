@@ -9,6 +9,8 @@ GoTOTP is a simple, stable, and efficient Time-Based One-Time Password (TOTP) li
 
 This implementation is based on **[RFC 6238](https://datatracker.ietf.org/doc/html/rfc6238)**, ensuring compatibility with Google Authenticator and similar apps.
 
+> **Note**: Most authenticator apps (Google Authenticator, Authy, etc.) default to SHA-1. Set `Algorithm: GoTOTP.SHA1` on your `TOTP` struct when targeting those apps. Omitting the field defaults to SHA-256.
+
 ### Why GoTOTP?
 
 - **Simplicity**: Prioritizes straightforward code and minimal changes once the library reaches maturity.
@@ -18,9 +20,9 @@ This implementation is based on **[RFC 6238](https://datatracker.ietf.org/doc/ht
 
 ## Features
 
-- Generates a 6-digit code, valid for 30 seconds (default).
+- Generates a 6-digit code, valid for 30 seconds.
+- Supports **SHA-1**, **SHA-256**, and **SHA-512** HMAC algorithms via the `Algorithm` field.
 - Built-in methods for secret generation, code verification, and URI generation for QR codes.
-- QR code support for Google Authenticator and other similar apps (future enhancement).
 
 ## Project Goals & Roadmap
 
@@ -56,49 +58,64 @@ import (
 
 func main() {
     // Generate a random secret (base32 encoded, without padding)
-    secret, err := GoTOTP.GenerateRandomSecret(32) // 32 bytes length
+    secret, err := GoTOTP.GenerateRandomSecret(32)
     if err != nil {
-        // Handle error
         fmt.Println("Error generating secret:", err)
         return
     }
 
-    // Create a new TOTP instance
+    // Create a new TOTP instance (Algorithm defaults to SHA-256 when omitted)
     totp := GoTOTP.TOTP{
-        Key:      "OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ",
+        Key:      secret,
         Issuer:   "mrtunne.info",
         UserName: "admin@admin.test",
     }
 
     // Generate a TOTP based on the current timestamp
-    code := totp.GenerateTOTP(time.Now().Unix())
+    code, err := totp.GenerateTOTP(time.Now().Unix())
+    if err != nil {
+        fmt.Println("Error generating TOTP:", err)
+        return
+    }
     fmt.Println("Generated TOTP:", code)
 
-    // Verify user input
-    if totp.Verify("149425") {
+    // Verify user input against the current timestamp
+    if totp.Verify(code) {
         fmt.Println("Code verified successfully!")
     } else {
         fmt.Println("Invalid code.")
     }
 
-    // Check code with a specific timestamp
-    if totp.VerifyWithTimestamp(1723719527, "611626") {
-        fmt.Println("Code valid for timestamp.")
-    } else {
-        fmt.Println("Code invalid for timestamp.")
+    // Generate a URI suitable for QR code scanners
+    uri, err := totp.GenerateURI()
+    if err != nil {
+        fmt.Println("Error generating URI:", err)
+        return
     }
-
-    // Generate a URI for QR code generation
-    uri := totp.GenerateURI()
     fmt.Println("TOTP URI:", uri)
-    // Example output:
-    // otpauth://totp/mrtunne.info:%20admin@admin.test?algorithm=SHA256&digits=6&issuer=mrtunne.info&period=30&secret=OK6ZZOALZY6RNZBPM4QKD2ZFO5F3PTP56VIAXLDJLEHBPLJJIZNQ
+}
+```
+
+### Choosing an algorithm
+
+```go
+// SHA-1 — required for Google Authenticator and most mobile apps
+totp := GoTOTP.TOTP{
+    Key:       secret,
+    Algorithm: GoTOTP.SHA1,
+}
+
+// SHA-512 — for services that explicitly require it
+totp := GoTOTP.TOTP{
+    Key:       secret,
+    Algorithm: GoTOTP.SHA512,
 }
 ```
 
 ### Notes:
-- **Default Expiration**: Generated codes expire after 30 seconds.
-- **Default Length**: Codes are 6 digits long.
+- **Default algorithm**: SHA-256 (set `Algorithm: GoTOTP.SHA1` for most authenticator apps).
+- **Default expiration**: Generated codes expire after 30 seconds.
+- **Default length**: Codes are 6 digits long.
 
 ## Contributing
 
